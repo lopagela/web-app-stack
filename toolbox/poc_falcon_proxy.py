@@ -21,7 +21,7 @@ logging.basicConfig(level=logging.DEBUG)
 log = logging.getLogger(__name__)
 log.debug("Logger configured")
 
-app = falcon.API()
+api = falcon.API()
 
 
 class RequestHandler:
@@ -42,9 +42,9 @@ class RequestHandler:
         log.debug(f"Successfully made the proxy call for requests='{req.method}', path='{req.path}'")
 
 
-app.add_sink(sink=RequestHandler(), prefix=r"/")
+api.add_sink(sink=RequestHandler(), prefix=r"/")
 
 if __name__ == '__main__':
     from wsgiref import simple_server
-    httpd = simple_server.make_server('127.0.0.1', 8000, app)
+    httpd = simple_server.make_server('127.0.0.1', 8000, api)
     httpd.serve_forever()
