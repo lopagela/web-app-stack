@@ -12,4 +12,4 @@ COPY api.py .
 EXPOSE 8000
 
 ENTRYPOINT [ "waitress-serve", "--port=8000" ]
-CMD [ "api:api" ]
+CMD [ "api:app" ]

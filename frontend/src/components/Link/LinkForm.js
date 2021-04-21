@@ -1,5 +1,4 @@
 import React, { Component } from 'react';
-import axios from 'axios';
 class LinkForm extends Component {
   constructor(props) {
     super(props);
@@ -12,23 +11,11 @@ class LinkForm extends Component {
     this.setState({link: event.target.value});
   }
 
-  saveLink(link) {
-    const urlApiLink = `${process.env.REACT_APP_API_URL}/api/v1/link`;
-    axios.post(urlApiLink, {link: link})
-    .then((response) => {
-        console.info('Received a successful response from the API');
-        console.info(response);
-    })
-    .catch((error) => {
-        console.warn('Received an error from the API');
-        console.warn(error)
-    })
-  }
-
+  // Wrapper of the handleSummit method given in the props
   handleSubmit(event) {
-  const { link } = this.state
-    console.debug(`A link was submitted=${link}`);
-    this.saveLink(link);
+    console.debug(`Caught a form send action`)
+    const { link } = this.state;
+    this.props.handleSubmit(link)
     event.preventDefault();
   }
 
@@ -39,7 +26,7 @@ class LinkForm extends Component {
         Link:
         <input type="text" value={this.state.link} onChange={this.handleChange} />
       </label>
-        <input type="submit" value="Submit" />
+        <input type="submit" value="Send!" />
       </form>
     );
   }

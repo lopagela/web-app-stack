@@ -3,6 +3,9 @@ from typing import List
 
 import falcon
 from falcon.media.validators import jsonschema
+from falcon_apispec import FalconPlugin
+from apispec import APISpec
+
 
 # TODO make the log configuration outside this file to isolate the
 #  API configuration and the technical configuration (log configuration)
@@ -18,6 +21,7 @@ schema_link_post_req = {
     },
     "required": ["link"]
 }
+
 
 class Storage:
     MAP: List[str] = list()
@@ -57,21 +61,18 @@ class LinkResource:
         resp.media = {"links": self.storage.get_all()}
 
 
-def return_400(req: falcon.Request, resp: falcon.Response) -> None:
-    log.debug(f"Received a request on path={req.path} with media={req.media}")
-    resp.status = falcon.HTTP_OK
-    resp.media = {"status": "success"}
-    # raise falcon.HTTPBadRequest(title="Unknown endpoint",
-    #                             description="Keep developing this application!")
+def return_404(req: falcon.Request, resp: falcon.Response) -> None:
+    log.debug(f"Received a request on {req.path=}, resulting in 404")
+    raise falcon.HTTPBadRequest(title="Not found",
+                                description="Keep developing this application!")
 
 
 class Server(falcon.App):
-
     def __init__(self):
         super(Server, self).__init__(middleware=falcon.CORSMiddleware())
         self.add_route("/api/v1/link", LinkResource(), suffix="link")
-        self.add_sink(return_400)
+        self.add_sink(return_404)
         log.info("Server initialized")
 
 
-api = Server()
+app = Server()
