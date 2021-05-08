@@ -11,7 +11,6 @@ COPY api.py .
 
 EXPOSE 8000
 
-# TODO it should use guvicorn for production use.
 # Note that the bind option *have to* be in the form 0.0.0.0:PORT
 # https://www.uvicorn.org/deployment/#gunicorn
 ENTRYPOINT [ "gunicorn", "--worker-class=uvicorn.workers.UvicornWorker", "--bind=0.0.0.0:8000" ]
