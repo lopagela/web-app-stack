@@ -5,22 +5,21 @@ import LinkTable from "./components/Link/LinkTable.js"
 import './App.css';
 import axios from 'axios';
 
-// TODO make a components that renders the links saved in the app : GET /api/v1/link
 class App extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      links: [],
+      urls: [],
     };
     this.handleSubmit = this.handleSubmit.bind(this);
   }
 
   getLinks() {
-    const urlApiLink = `${process.env.REACT_APP_API_URL}/api/v1/link`;
+    const urlApiLink = `${process.env.REACT_APP_API_URL}/api/v1/links`;
       axios.get(urlApiLink)
       .then((response) => {
           console.debug('Successfully downloaded the links');
-          this.setState({links: response.data.links})
+          this.setState({urls: response.data.urls})
       })
       .catch((error) => {
           console.warn('Received an error from the API');
@@ -32,10 +31,10 @@ class App extends Component {
     this.getLinks();
   }
 
-  handleSubmit(link) {
-    console.debug(`A link was submitted=${link}`);
-    const urlApiLink = `${process.env.REACT_APP_API_URL}/api/v1/link`;
-      axios.post(urlApiLink, {link: link})
+  handleSubmit(url) {
+    console.debug(`A url was submitted=${url}`);
+    const urlApiLink = `${process.env.REACT_APP_API_URL}/api/v1/links`;
+      axios.post(urlApiLink, {url: url})
       .then((response) => {
           console.info('Received a successful response from the API');
           console.info(response);
@@ -66,7 +65,7 @@ class App extends Component {
           </p>
         </div>
         <LinkForm handleSubmit={this.handleSubmit}/>
-        <LinkTable links={this.state.links}/>
+        <LinkTable urls={this.state.urls}/>
       </div>
     );
   }

@@ -1,26 +1,22 @@
 import logging
-from typing import List
+from typing import List, Dict
 
-import falcon
-from falcon.media.validators import jsonschema
-from falcon_apispec import FalconPlugin
-from apispec import APISpec
+from fastapi import FastAPI, Request, Response
+from fastapi.middleware.cors import CORSMiddleware
+from pydantic.main import BaseModel
 
 
 # TODO make the log configuration outside this file to isolate the
 #  API configuration and the technical configuration (log configuration)
+
 logging.basicConfig(level="DEBUG")
 log = logging.getLogger(__name__)
 
-schema_link_post_req = {
-    "$schema": "https://json-schema.org/schema#",
+app = FastAPI()
 
-    "type": "object",
-    "properties": {
-        "link": {"type": "string"},
-    },
-    "required": ["link"]
-}
+
+class Link(BaseModel):
+    url: str
 
 
 class Storage:
@@ -44,35 +40,38 @@ class Storage:
         return True
 
 
-class LinkResource:
-    storage = Storage()
-
-    @jsonschema.validate(req_schema=schema_link_post_req)
-    def on_post_link(self, req: falcon.Request, resp: falcon.Response) -> None:
-        log.info(f"Received a request to save a link from sender={req.access_route}")
-        link = req.media['link']
-        is_saved = self.storage.put(link)
-        resp.status = falcon.HTTP_OK
-        resp.media = {"isSaved": is_saved, "link": link}
-
-    def on_get_link(self, req: falcon.Request, resp: falcon.Response) -> None:
-        log.info(f"Received a request to get links from sender={req.access_route}")
-        resp.status = falcon.HTTP_OK
-        resp.media = {"links": self.storage.get_all()}
+storage = Storage()
 
 
-def return_404(req: falcon.Request, resp: falcon.Response) -> None:
-    log.debug(f"Received a request on {req.path=}, resulting in 404")
-    raise falcon.HTTPBadRequest(title="Not found",
-                                description="Keep developing this application!")
+@app.post("/api/v1/links")
+def on_post_link(link: Link, request: Request) -> dict:
+    log.info(f"Received a request to save a link from {request.client.host=}")
+    is_saved = storage.put(link.url)
+    return {"isSaved": is_saved, "url": link.url}
 
 
-class Server(falcon.App):
-    def __init__(self):
-        super(Server, self).__init__(middleware=falcon.CORSMiddleware())
-        self.add_route("/api/v1/link", LinkResource(), suffix="link")
-        self.add_sink(return_404)
-        log.info("Server initialized")
+@app.get("/api/v1/links")
+def on_get_link(request: Request) -> Dict[str, List[str]]:
+    log.info(f"Received a request to get links from {request.client.host=}")
+    return {"urls": storage.get_all()}
 
 
-app = Server()
+log.info("Server initialized")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+
+@app.middleware("http")
+async def add_process_time_header(request: Request, call_next):
+    log.info(f"{request.method=} on {request.url=} by {request.client.host=}")
+    response: Response = await call_next(request)
+    log.info(f"{response.status_code=} for {request.client.host=}")
+    return response
+
+log.info("CORS configured, accept everything")
