@@ -1,0 +1,81 @@
+# Generated thanks to: kubectl create deployment --image backend web-app-backend --dry-run=client -o yaml
+# https://kubernetes.io/docs/concepts/workloads/controllers/deployment/
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: web-app-stack
+  name: web-app-stack
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: web-app-stack
+  template:
+    metadata:
+      labels:
+        app: web-app-stack
+    spec:
+      containers:
+      # The ports exposed by the container are the one described in their `Dockerfile`
+      - image: web-app-backend
+        name: backend
+        imagePullPolicy: IfNotPresent
+      - image: web-app-frontend
+        name: frontend
+        imagePullPolicy: IfNotPresent
+status: {}
+---
+# Generated thanks to: kubectl create service nodeport web-app-backend --tcp=8000 --dry-run=client -o yaml
+# https://kubernetes.io/docs/concepts/services-networking/service/
+apiVersion: v1
+kind: Service
+metadata:
+  creationTimestamp: null
+  labels:
+    app: web-app
+  name: web-app
+spec:
+  ports:
+  - name: web-app-backend
+    port: 8000
+    protocol: TCP
+    targetPort: 8000
+  - name: web-app-frontend
+    port: 3000
+    protocol: TCP
+    targetPort: 80
+  selector:
+    app: web-app-stack
+  type: NodePort
+status:
+  loadBalancer: {}
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ingress-web-app
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+spec:
+  rules:
+  - host: web-app.local
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: web-app-frontend
+            port:
+              number: 80
+  - host: web-app.local
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: web-app-backend
+            port:
+              number: 8000
